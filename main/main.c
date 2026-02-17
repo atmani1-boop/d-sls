@@ -328,7 +328,7 @@ void app_main(void)
 
     // Register CLI commands
     ESP_LOGI(TAG, "Registering CLI commands...");
-    register_mram_commands();
+    cli_mram_register();
     esp_console_register_help_command();
 
     // Start FreeRTOS tasks in priority order
