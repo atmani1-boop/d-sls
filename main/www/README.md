@@ -6,9 +6,11 @@ The web server module provides a WiFi Access Point and HTTP server with a beauti
 
 ### WiFi Access Point
 - **SSID**: DIAMANT_AP
-- **Password**: diamant2026
+- **Password**: diamant2026 ⚠️ **CHANGE IN PRODUCTION!**
 - **IP Address**: 192.168.4.1
 - **Maximum Connections**: 4
+
+> ⚠️ **Security Warning**: The default password is for development only. Always change it in production deployments.
 
 ### REST API Endpoints
 
