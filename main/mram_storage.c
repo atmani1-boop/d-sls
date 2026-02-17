@@ -18,6 +18,22 @@ static mram_config_t g_config;  // Cached configuration
 static bool g_initialized = false;
 
 //============================================================================
+// CONSTANTS FOR ENERGY CALCULATIONS
+//============================================================================
+
+// Battery capacity for cycle calculations (should match actual battery)
+#define BATTERY_CAPACITY_KWH    5.0f
+
+// Simplified PV current assumption for power calculation (A)
+// TODO: Replace with actual PV current measurement from sensor
+#define PV_ASSUMED_CURRENT_A    1.0f
+
+// LED power consumption per unit intensity (W per unit)
+// Simplified calculation: (warm + cool) * factor
+// TODO: Replace with actual LED power characteristics
+#define LED_POWER_FACTOR        0.5f
+
+//============================================================================
 // CRC16-CCITT IMPLEMENTATION
 //============================================================================
 
@@ -332,7 +348,8 @@ esp_err_t mram_stats_calculate(mram_stats_t *stats)
         pv_voltage_sum += pv_voltage;
         
         if (entries[i].timestamp >= today_start) {
-            float pv_power = pv_voltage * 1.0f;  // Simplified power calculation
+            // Power = Voltage × Current (using assumed current)
+            float pv_power = pv_voltage * PV_ASSUMED_CURRENT_A;
             pv_energy_sum += pv_power * (g_config.log_interval_sec / 3600.0f);
         }
 
@@ -352,9 +369,9 @@ esp_err_t mram_stats_calculate(mram_stats_t *stats)
             }
         }
 
-        // LED statistics
+        // LED statistics - estimated power based on intensity levels
         if (entries[i].timestamp >= today_start) {
-            float led_power = (entries[i].led_warm + entries[i].led_cool) * 0.5f;  // Simplified
+            float led_power = (entries[i].led_warm + entries[i].led_cool) * LED_POWER_FACTOR;
             led_energy_sum += led_power * (g_config.log_interval_sec / 3600.0f) / 1000.0f;
         }
 
@@ -367,7 +384,7 @@ esp_err_t mram_stats_calculate(mram_stats_t *stats)
         stats->pv_avg_voltage = pv_voltage_sum / valid_entries;
         stats->batt_energy_charged_kwh = batt_charge_sum;
         stats->batt_energy_discharged_kwh = batt_discharge_sum;
-        stats->batt_cycles_total = batt_discharge_sum / 5.0f;  // Assuming 5kWh battery
+        stats->batt_cycles_total = batt_discharge_sum / BATTERY_CAPACITY_KWH;
         stats->batt_health_percent = 100.0f - (stats->batt_cycles_total * 0.01f);
         stats->v2g_export_kwh_today = v2g_export_sum;
         stats->v2g_import_kwh_today = v2g_import_sum;

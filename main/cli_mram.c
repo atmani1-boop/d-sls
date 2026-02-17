@@ -29,7 +29,7 @@ static void print_timestamp(uint32_t timestamp)
 static const char* get_weather_string(uint8_t state)
 {
     const char* weather_states[] = {
-        "Unknown", "Sunny", "Cloudy", "Overcast", "Rainy", "Stormy"
+        "Clear", "Cloudy", "Intermittent", "Rain", "Fog", "Unknown"
     };
     return (state < 6) ? weather_states[state] : "Invalid";
 }
@@ -37,9 +37,9 @@ static const char* get_weather_string(uint8_t state)
 static const char* get_time_period_string(uint8_t period)
 {
     const char* periods[] = {
-        "Night", "Morning", "Noon", "Afternoon", "Evening"
+        "Day", "Civil Twilight", "Night"
     };
-    return (period < 5) ? periods[period] : "Invalid";
+    return (period < 3) ? periods[period] : "Invalid";
 }
 
 //============================================================================
