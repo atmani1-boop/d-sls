@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIAMANT v2.1 Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e0e7ff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+        }
+
+        .card-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .metric {
+            margin: 12px 0;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #e0e7ff;
+        }
+
+        .metric-unit {
+            font-size: 0.6em;
+            color: #94a3b8;
+            margin-left: 4px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge-blue { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .badge-green { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .badge-yellow { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .badge-red { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #94a3b8;
+        }
+
+        .spinner {
+            border: 3px solid rgba(59, 130, 246, 0.1);
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ DIAMANT v2.1 Dashboard</h1>
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Connecting...</span>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading system data...</p>
+        </div>
+
+        <div id="dashboard" style="display: none;">
+            <!-- Metric Cards -->
+            <div class="grid">
+                <!-- Solar PV Card -->
+                <div class="card">
+                    <div class="card-title">☀️ Solar PV</div>
+                    <div class="metric">
+                        <div class="metric-label">PV Voltage</div>
+                        <div class="metric-value" id="pvVoltage">--<span class="metric-unit">V</span></div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Ambient Light</div>
+                        <div class="metric-value" id="ambientLux">--<span class="metric-unit">lux</span></div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Weather</div>
+                        <span class="badge badge-blue" id="weatherState">--</span>
+                    </div>
+                </div>
+
+                <!-- Battery BMS Card -->
+                <div class="card">
+                    <div class="card-title">🔋 Battery BMS</div>
+                    <div class="metric">
+                        <div class="metric-label">State of Charge</div>
+                        <div class="metric-value" id="bmsSOC">--<span class="metric-unit">%</span></div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Voltage / Current</div>
+                        <div class="metric-value" style="font-size: 1.4em;">
+                            <span id="bmsVoltage">--</span>V / <span id="bmsCurrent">--</span>A
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Temperature</div>
+                        <div class="metric-value" id="bmsTemp">--<span class="metric-unit">°C</span></div>
+                    </div>
+                </div>
+
+                <!-- LED System Card -->
+                <div class="card">
+                    <div class="card-title">💡 LED System</div>
+                    <div class="metric">
+                        <div class="metric-label">Active Profile</div>
+                        <span class="badge badge-yellow" id="ledProfile">--</span>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Warm LED</div>
+                        <div class="metric-value" id="ledWarm">--<span class="metric-unit">%</span></div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Cool LED</div>
+                        <div class="metric-value" id="ledCool">--<span class="metric-unit">%</span></div>
+                    </div>
+                </div>
+
+                <!-- V2G System Card -->
+                <div class="card">
+                    <div class="card-title">⚡ V2G System</div>
+                    <div class="metric">
+                        <div class="metric-label">Active Profile</div>
+                        <span class="badge badge-green" id="v2gProfile">--</span>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Power Target</div>
+                        <div class="metric-value" id="v2gPower">--<span class="metric-unit">W</span></div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Mode</div>
+                        <div id="v2gReason" style="font-size: 0.85em; color: #94a3b8; margin-top: 8px;">--</div>
+                    </div>
+                </div>
+
+                <!-- Astronomical Card -->
+                <div class="card">
+                    <div class="card-title">🌅 Astronomical</div>
+                    <div class="metric">
+                        <div class="metric-label">Current Period</div>
+                        <span class="badge badge-blue" id="timePeriod">--</span>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Sunrise / Sunset</div>
+                        <div style="font-size: 1.1em; margin-top: 8px;">
+                            🌅 <span id="sunrise">--</span> | 🌇 <span id="sunset">--</span>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Season</div>
+                        <span class="badge badge-green" id="season">--</span>
+                    </div>
+                </div>
+
+                <!-- System Stats Card -->
+                <div class="card">
+                    <div class="card-title">🖥️ System Stats</div>
+                    <div class="metric">
+                        <div class="metric-label">Uptime</div>
+                        <div class="metric-value" id="uptime" style="font-size: 1.4em;">--</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Board / Heatsink Temp</div>
+                        <div style="font-size: 1.1em; margin-top: 8px;">
+                            🌡️ <span id="boardTemp">--</span>°C / <span id="heatsinkTemp">--</span>°C
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Cards -->
+            <div class="grid">
+                <div class="card">
+                    <div class="card-title">📊 Power Flow History</div>
+                    <div class="chart-container">
+                        <canvas id="powerChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📊 Battery SOC & Temperature</div>
+                    <div class="chart-container">
+                        <canvas id="batteryChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📊 LED & Ambient Light</div>
+                    <div class="chart-container">
+                        <canvas id="ledChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let powerChart, batteryChart, ledChart;
+        let isOnline = false;
+
+        // Helper functions
+        function formatTime(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleTimeString();
+        }
+
+        function formatUptime(seconds) {
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            return `${days}d ${hours}h ${mins}m`;
+        }
+
+        function updateStatus(online) {
+            isOnline = online;
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            
+            if (online) {
+                dot.classList.remove('offline');
+                text.textContent = 'Connected';
+            } else {
+                dot.classList.add('offline');
+                text.textContent = 'Offline';
+            }
+        }
+
+        // Update metrics from status data
+        function updateMetrics(data) {
+            // Solar PV
+            document.getElementById('pvVoltage').innerHTML = 
+                `${data.weather.pv_voltage.toFixed(2)}<span class="metric-unit">V</span>`;
+            document.getElementById('ambientLux').innerHTML = 
+                `${data.weather.ambient_lux.toFixed(0)}<span class="metric-unit">lux</span>`;
+            document.getElementById('weatherState').textContent = data.weather.state;
+
+            // Battery BMS
+            document.getElementById('bmsSOC').innerHTML = 
+                `${data.bms.soc_percent.toFixed(1)}<span class="metric-unit">%</span>`;
+            document.getElementById('bmsVoltage').textContent = data.bms.voltage.toFixed(2);
+            document.getElementById('bmsCurrent').textContent = data.bms.current.toFixed(2);
+            document.getElementById('bmsTemp').innerHTML = 
+                `${data.bms.temperature.toFixed(1)}<span class="metric-unit">°C</span>`;
+
+            // LED System
+            document.getElementById('ledProfile').textContent = data.led.name || '--';
+            document.getElementById('ledWarm').innerHTML = 
+                `${data.led.warm_intensity || 0}<span class="metric-unit">%</span>`;
+            document.getElementById('ledCool').innerHTML = 
+                `${data.led.cool_intensity || 0}<span class="metric-unit">%</span>`;
+
+            // V2G System
+            document.getElementById('v2gProfile').textContent = data.v2g.name || '--';
+            document.getElementById('v2gPower').innerHTML = 
+                `${data.v2g.power_target || 0}<span class="metric-unit">W</span>`;
+            document.getElementById('v2gReason').textContent = data.v2g.reason || '--';
+
+            // Astronomical
+            document.getElementById('timePeriod').textContent = data.astro.current_period;
+            document.getElementById('sunrise').textContent = formatTime(data.astro.sunrise);
+            document.getElementById('sunset').textContent = formatTime(data.astro.sunset);
+            document.getElementById('season').textContent = data.calendar.season;
+
+            // System Stats
+            document.getElementById('uptime').textContent = formatUptime(data.uptime_sec);
+            document.getElementById('boardTemp').textContent = data.board_temp.toFixed(1);
+            document.getElementById('heatsinkTemp').textContent = data.heatsink_temp.toFixed(1);
+        }
+
+        // Initialize charts
+        function initCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#e0e7ff' }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#94a3b8' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    },
+                    y: {
+                        ticks: { color: '#94a3b8' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    }
+                }
+            };
+
+            // Power Flow Chart
+            powerChart = new Chart(document.getElementById('powerChart'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'V2G Power (W)',
+                        data: [],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'PV Voltage (V)',
+                        data: [],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        ...chartOptions.scales,
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Battery Chart
+            batteryChart = new Chart(document.getElementById('batteryChart'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'SOC (%)',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Temperature (°C)',
+                        data: [],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        ...chartOptions.scales,
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // LED Chart
+            ledChart = new Chart(document.getElementById('ledChart'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Warm LED (%)',
+                        data: [],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Cool LED (%)',
+                        data: [],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Ambient (lux)',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        ...chartOptions.scales,
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update charts with historical data
+        function updateCharts(history) {
+            if (history.length === 0) return;
+
+            const labels = history.map(h => formatTime(h.timestamp));
+            const maxPoints = 60;
+
+            // Power Flow Chart
+            powerChart.data.labels = labels.slice(-maxPoints);
+            powerChart.data.datasets[0].data = history.slice(-maxPoints).map(h => h.v2g_power);
+            powerChart.data.datasets[1].data = history.slice(-maxPoints).map(h => h.pv_voltage);
+            powerChart.update('none');
+
+            // Battery Chart
+            batteryChart.data.labels = labels.slice(-maxPoints);
+            batteryChart.data.datasets[0].data = history.slice(-maxPoints).map(h => h.bms_soc);
+            batteryChart.data.datasets[1].data = history.slice(-maxPoints).map(h => h.bms_temperature);
+            batteryChart.update('none');
+
+            // LED Chart
+            ledChart.data.labels = labels.slice(-maxPoints);
+            ledChart.data.datasets[0].data = history.slice(-maxPoints).map(h => h.led_warm);
+            ledChart.data.datasets[1].data = history.slice(-maxPoints).map(h => h.led_cool);
+            ledChart.data.datasets[2].data = history.slice(-maxPoints).map(h => h.ambient_lux);
+            ledChart.update('none');
+        }
+
+        // Fetch status data
+        async function fetchStatus() {
+            try {
+                const response = await fetch('/api/status');
+                if (!response.ok) throw new Error('Failed to fetch status');
+                const data = await response.json();
+                updateStatus(true);
+                updateMetrics(data);
+            } catch (error) {
+                console.error('Error fetching status:', error);
+                updateStatus(false);
+            }
+        }
+
+        // Fetch historical data
+        async function fetchHistory() {
+            try {
+                const response = await fetch('/api/history?hours=2');
+                if (!response.ok) throw new Error('Failed to fetch history');
+                const data = await response.json();
+                updateCharts(data);
+            } catch (error) {
+                console.error('Error fetching history:', error);
+            }
+        }
+
+        // Initialize dashboard
+        async function init() {
+            initCharts();
+            
+            // Initial data fetch
+            await fetchStatus();
+            await fetchHistory();
+            
+            // Hide loading, show dashboard
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            
+            // Set up periodic updates
+            setInterval(fetchStatus, 2000);      // Update status every 2 seconds
+            setInterval(fetchHistory, 30000);    // Update history every 30 seconds
+        }
+
+        // Start when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
