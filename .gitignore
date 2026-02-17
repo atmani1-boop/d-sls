@@ -1,0 +1,37 @@
+# Build artifacts
+build/
+dist/
+*.o
+*.a
+*.so
+*.dll
+*.exe
+test_diamant
+test_profiles
+
+# ESP-IDF specific
+sdkconfig
+sdkconfig.old
+.config
+.config.old
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Dependencies
+node_modules/
+dependencies/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
