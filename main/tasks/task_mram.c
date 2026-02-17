@@ -76,14 +76,21 @@ static void fusion_to_history_entry(const fusion_data_t *fusion, mram_history_en
     entry->time_period = (uint8_t)fusion->astro.current_period;
     
     // Battery data (scaled)
-    entry->batt_soc = (uint8_t)fusion->bms.soc_percent;
-    entry->batt_voltage = (int16_t)(fusion->bms.voltage * 100);
-    entry->batt_current = (int16_t)(fusion->bms.current * 100);
-    entry->batt_temp = (int8_t)fusion->bms.temperature;
+    entry->bms_soc = (uint16_t)(fusion->bms.soc_percent * 100);
+    entry->bms_voltage = (int16_t)(fusion->bms.voltage * 100);
+    entry->bms_current = (int16_t)(fusion->bms.current * 100);
+    entry->bms_temperature = (int16_t)(fusion->bms.temperature * 100);
     
-    // System data
-    entry->board_temp = (int8_t)fusion->board_temp;
-    entry->heatsink_temp = (int8_t)fusion->heatsink_temp;
+    // System data (scaled)
+    entry->board_temp = (int16_t)(fusion->board_temp * 100);
+    entry->heatsink_temp = (int16_t)(fusion->heatsink_temp * 100);
+    
+    // V2G power (from profile or zero)
+    if (fusion->active_v2g_profile) {
+        entry->v2g_power = fusion->active_v2g_profile->power_target;
+    } else {
+        entry->v2g_power = 0;
+    }
     
     // Profile IDs
     entry->v2g_profile_id = fusion->active_v2g_profile ? fusion->active_v2g_profile->id : 0xFF;
@@ -98,12 +105,8 @@ static void fusion_to_history_entry(const fusion_data_t *fusion, mram_history_en
         entry->led_cool = 0;
     }
     
-    // Status flags
-    entry->flags = 0;
-    if (fusion->bms.alert_active) entry->flags |= 0x01;
-    if (fusion->weather.pv_oscillating) entry->flags |= 0x02;
-    if (fusion->calendar.is_weekend) entry->flags |= 0x04;
-    if (fusion->calendar.is_holiday) entry->flags |= 0x08;
+    // Reserved field
+    entry->reserved = 0;
 }
 
 /**
