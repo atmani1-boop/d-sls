@@ -1,0 +1,31 @@
+idf_component_register(
+    SRCS 
+        "main.c"
+        "astro.c"
+        "calendar.c"
+        "weather.c"
+        "fusion.c"
+        "mram_storage.c"
+        "drivers/at24c256.c"
+        "cli_mram.c"
+        "web_server.c"
+        "tasks/task_fusion.c"
+        "tasks/task_mram.c"
+        "tasks/task_webserver.c"
+    INCLUDE_DIRS 
+        "."
+        "include"
+        "drivers"
+        "tasks"
+    EMBED_FILES
+        "www/dashboard.html"
+    REQUIRES 
+        esp_http_server
+        json
+        esp_wifi
+        esp_netif
+        driver
+        nvs_flash
+        console
+        esp_event
+)

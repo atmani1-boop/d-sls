@@ -1,0 +1,218 @@
+{
+  "version": 1,
+  "author": "D-SLS SRL",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-c6-devkitc-1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-i2c-eeprom",
+      "id": "eeprom1",
+      "top": 96,
+      "left": 288,
+      "attrs": {
+        "size": "32768"
+      }
+    },
+    {
+      "type": "wokwi-tsl2591",
+      "id": "lux1",
+      "top": -48,
+      "left": 288,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-tmp1117",
+      "id": "temp1",
+      "top": -48,
+      "left": 384,
+      "attrs": {
+        "address": "0x48"
+      }
+    },
+    {
+      "type": "wokwi-tmp1117",
+      "id": "temp2",
+      "top": 96,
+      "left": 384,
+      "attrs": {
+        "address": "0x4A"
+      }
+    },
+    {
+      "type": "wokwi-ads1115",
+      "id": "adc1",
+      "top": 192,
+      "left": 288,
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [
+      "esp:GND.1",
+      "eeprom1:GND",
+      "black",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "esp:3V3",
+      "eeprom1:VCC",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "esp:GPIO20",
+      "eeprom1:SDA",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "esp:GPIO21",
+      "eeprom1:SCL",
+      "yellow",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "esp:GND.2",
+      "lux1:GND",
+      "black",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "esp:3V3",
+      "lux1:VIN",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "eeprom1:SDA",
+      "lux1:SDA",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "eeprom1:SCL",
+      "lux1:SCL",
+      "yellow",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "lux1:GND",
+      "temp1:GND",
+      "black",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "lux1:VIN",
+      "temp1:V+",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "lux1:SDA",
+      "temp1:SDA",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "lux1:SCL",
+      "temp1:SCL",
+      "yellow",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "temp1:GND",
+      "temp2:GND",
+      "black",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "temp1:V+",
+      "temp2:V+",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "temp1:SDA",
+      "temp2:SDA",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "temp1:SCL",
+      "temp2:SCL",
+      "yellow",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "temp2:GND",
+      "adc1:GND",
+      "black",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "temp2:V+",
+      "adc1:VDD",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "temp2:SDA",
+      "adc1:SDA",
+      "green",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "temp2:SCL",
+      "adc1:SCL",
+      "yellow",
+      [
+        "h0"
+      ]
+    ]
+  ],
+  "dependencies": {}
+}

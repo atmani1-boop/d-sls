@@ -1,0 +1,25 @@
+[wokwi]
+version = 1
+firmware = "build/diamant-v2.bin"
+elf = "build/diamant-v2.elf"
+
+[[net.forward]]
+# Forward port 80 (HTTP) to host
+port = 80
+host = "localhost"
+hostPort = 8080
+
+[env]
+# WiFi AP configuration
+WIFI_SSID = "DIAMANT_AP"
+WIFI_PASSWORD = "diamant2026"
+
+# I2C devices (simulated)
+I2C_EEPROM_ADDR = "0x50"
+I2C_TSL2591_ADDR = "0x29"
+I2C_TMP117_1_ADDR = "0x48"
+I2C_TMP117_2_ADDR = "0x4A"
+I2C_ADS1115_ADDR = "0x49"
+
+# Simulation settings
+SIMULATE_SENSORS = "true"
