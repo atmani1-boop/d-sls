@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIAMANT v2.1 REV E - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .profile-id {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .profile-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .profile-details {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        
+        .profile-details small {
+            display: block;
+            margin-top: 5px;
+        }
+        
+        .cct-indicator {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .cct-warm {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+        
+        .cct-neutral {
+            background: #fdcb6e;
+            color: #e17055;
+        }
+        
+        .cct-cool {
+            background: #74b9ff;
+            color: #0984e3;
+        }
+        
+        .night-saver-badge {
+            display: inline-block;
+            background: #2d3436;
+            color: #f1c40f;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .data-row:last-child {
+            border-bottom: none;
+        }
+        
+        .data-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .data-value {
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .priority-badge {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .priority-low {
+            background: #27ae60;
+        }
+        
+        .priority-medium {
+            background: #f39c12;
+        }
+        
+        .priority-high {
+            background: #e74c3c;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-ok {
+            background: #27ae60;
+            box-shadow: 0 0 10px #27ae60;
+        }
+        
+        .status-warning {
+            background: #f39c12;
+            box-shadow: 0 0 10px #f39c12;
+        }
+        
+        .status-critical {
+            background: #e74c3c;
+            box-shadow: 0 0 10px #e74c3c;
+        }
+        
+        .refresh-info {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ DIAMANT v2.1 REV E</h1>
+            <p>Solar LED Controller - Fusion System Dashboard</p>
+        </div>
+        
+        <div class="grid">
+            <!-- LED Profile Card -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="status-indicator status-ok"></span>
+                    💡 LED Profile
+                </div>
+                <div id="ledProfile">
+                    <div class="profile-id">0x--</div>
+                    <div class="profile-name">Loading...</div>
+                    <div class="profile-details">
+                        <small>Waiting for data...</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- MPPT Profile Card -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="status-indicator status-ok"></span>
+                    ☀️ MPPT Profile
+                </div>
+                <div id="mpptProfile">
+                    <div class="profile-id">0x--</div>
+                    <div class="profile-name">Loading...</div>
+                    <div class="profile-details">
+                        <small>Waiting for data...</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- V2G Profile Card -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="status-indicator status-ok"></span>
+                    🔋 V2G Profile
+                </div>
+                <div id="v2gProfile">
+                    <div class="profile-id">0x--</div>
+                    <div class="profile-name">Loading...</div>
+                    <div class="profile-details">
+                        <small>Waiting for data...</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- BMS Data Card -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="status-indicator status-ok"></span>
+                    🔋 Battery Status
+                </div>
+                <div id="bmsData">
+                    <div class="data-row">
+                        <span class="data-label">SOC:</span>
+                        <span class="data-value" id="socValue">--%</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Voltage:</span>
+                        <span class="data-value" id="voltageValue">--V</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Current:</span>
+                        <span class="data-value" id="currentValue">--A</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="refresh-info">
+            Auto-refresh every 2 seconds | Last update: <span id="lastUpdate">--:--:--</span>
+        </div>
+    </div>
+    
+    <script>
+        // Fetch and update dashboard data
+        async function updateDashboard() {
+            try {
+                const response = await fetch('/api/profiles');
+                const data = await response.json();
+                
+                // Update LED Profile
+                if (data.led_profile) {
+                    const ledId = '0x' + data.led_profile.profile_id.toString(16).toUpperCase().padStart(2, '0');
+                    const cctClass = data.led_profile.cct_kelvin < 3200 ? 'cct-warm' : 
+                                   (data.led_profile.cct_kelvin < 4200 ? 'cct-neutral' : 'cct-cool');
+                    const priorityClass = data.led_profile.priority <= 2 ? 'priority-high' :
+                                        (data.led_profile.priority <= 4 ? 'priority-medium' : 'priority-low');
+                    
+                    document.getElementById('ledProfile').innerHTML = `
+                        <div class="profile-id">${ledId}</div>
+                        <div class="profile-name">${data.led_profile.profile_name}</div>
+                        <div class="profile-details">
+                            <div class="cct-indicator ${cctClass}">${data.led_profile.cct_kelvin}K CCT</div>
+                            <span class="priority-badge ${priorityClass}">P${data.led_profile.priority}</span>
+                            ${data.led_profile.night_saver_enabled ? '<div class="night-saver-badge">🌙 Night-Saver Active</div>' : ''}
+                            <small>Base: ${data.led_profile.base_intensity}%</small>
+                            <small>${data.led_profile.conditions}</small>
+                        </div>
+                    `;
+                }
+                
+                // Update MPPT Profile
+                if (data.mppt_profile) {
+                    const mpptId = '0x' + data.mppt_profile.profile_id.toString(16).toUpperCase().padStart(2, '0');
+                    
+                    document.getElementById('mpptProfile').innerHTML = `
+                        <div class="profile-id">${mpptId}</div>
+                        <div class="profile-name">${data.mppt_profile.profile_name}</div>
+                        <div class="profile-details">
+                            <small>Step: ×${data.mppt_profile.step_multiplier.toFixed(1)}</small>
+                            <small>Period: ×${data.mppt_profile.update_period_multiplier.toFixed(1)}</small>
+                            <small>I-limit: ${(data.mppt_profile.max_current_limit * 100).toFixed(0)}%</small>
+                        </div>
+                    `;
+                }
+                
+                // Update V2G Profile
+                if (data.v2g_profile) {
+                    const v2gId = '0x' + data.v2g_profile.profile_id.toString(16).toUpperCase().padStart(2, '0');
+                    const powerDirection = data.v2g_profile.power_w > 0 ? '📤 Export' : 
+                                         (data.v2g_profile.power_w < 0 ? '📥 Import' : '⏸️ Hold');
+                    const priorityClass = data.v2g_profile.priority <= 2 ? 'priority-high' :
+                                        (data.v2g_profile.priority <= 4 ? 'priority-medium' : 'priority-low');
+                    
+                    document.getElementById('v2gProfile').innerHTML = `
+                        <div class="profile-id">${v2gId}</div>
+                        <div class="profile-name">${data.v2g_profile.profile_name}</div>
+                        <div class="profile-details">
+                            <small>${powerDirection}: ${Math.abs(data.v2g_profile.power_w)}W</small>
+                            <span class="priority-badge ${priorityClass}">P${data.v2g_profile.priority}</span>
+                        </div>
+                    `;
+                }
+                
+                // Update BMS Data
+                if (data.bms) {
+                    document.getElementById('socValue').textContent = data.bms.soc_percent.toFixed(1) + '%';
+                    document.getElementById('voltageValue').textContent = data.bms.voltage.toFixed(1) + 'V';
+                    document.getElementById('currentValue').textContent = data.bms.current.toFixed(2) + 'A';
+                    
+                    // Update SOC status indicator
+                    const socIndicator = document.querySelectorAll('.status-indicator')[3];
+                    if (data.bms.soc_percent < 20) {
+                        socIndicator.className = 'status-indicator status-critical';
+                    } else if (data.bms.soc_percent < 40) {
+                        socIndicator.className = 'status-indicator status-warning';
+                    } else {
+                        socIndicator.className = 'status-indicator status-ok';
+                    }
+                }
+                
+                // Update timestamp
+                const now = new Date();
+                document.getElementById('lastUpdate').textContent = 
+                    now.getHours().toString().padStart(2, '0') + ':' +
+                    now.getMinutes().toString().padStart(2, '0') + ':' +
+                    now.getSeconds().toString().padStart(2, '0');
+                
+            } catch (error) {
+                console.error('Failed to update dashboard:', error);
+            }
+        }
+        
+        // Update immediately on load
+        updateDashboard();
+        
+        // Auto-refresh every 2 seconds
+        setInterval(updateDashboard, 2000);
+    </script>
+</body>
+</html>
