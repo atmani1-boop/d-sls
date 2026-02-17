@@ -16,6 +16,7 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "esp_system.h"
+#include "esp_timer.h"
 #include <time.h>
 #include <string.h>
 
@@ -227,10 +228,13 @@ static void mram_task(void *pvParameters)
              MRAM_TASK_PRIORITY, MRAM_TASK_CYCLE_MS);
 
     TickType_t last_wake_time = xTaskGetTickCount();
-    uint32_t current_time = 0;
+    uint64_t current_time_us = 0;
+    uint32_t current_time_sec = 0;
 
     while (s_task_running) {
-        current_time = esp_log_timestamp() / 1000;  // Convert to seconds
+        // Use esp_timer for reliable long-term timing (avoids overflow issues)
+        current_time_us = esp_timer_get_time();
+        current_time_sec = (uint32_t)(current_time_us / 1000000ULL);
 
         // Check if immediate log requested
         if (s_log_now_requested) {
@@ -240,25 +244,25 @@ static void mram_task(void *pvParameters)
         }
 
         // Periodic data logging (every 30 minutes by default)
-        if (current_time - s_last_log_time >= s_config.log_interval_sec) {
+        if (current_time_sec - s_last_log_time >= s_config.log_interval_sec) {
             ESP_LOGI(TAG, "Periodic data logging...");
             log_data_to_mram();
-            s_last_log_time = current_time;
+            s_last_log_time = current_time_sec;
         }
 
         // Statistics calculation (every hour)
-        if (current_time - s_last_stats_time >= MRAM_STATS_INTERVAL_SEC) {
+        if (current_time_sec - s_last_stats_time >= MRAM_STATS_INTERVAL_SEC) {
             ESP_LOGI(TAG, "Calculating statistics...");
             calculate_statistics();
             display_predictions();
-            s_last_stats_time = current_time;
+            s_last_stats_time = current_time_sec;
         }
 
         // Configuration update (every 24 hours)
-        if (current_time - s_last_config_time >= MRAM_CONFIG_UPDATE_SEC) {
+        if (current_time_sec - s_last_config_time >= MRAM_CONFIG_UPDATE_SEC) {
             ESP_LOGI(TAG, "Updating configuration...");
             update_configuration();
-            s_last_config_time = current_time;
+            s_last_config_time = current_time_sec;
         }
 
         // Wait for next cycle
@@ -316,8 +320,9 @@ esp_err_t task_mram_start(void)
         ESP_LOGI(TAG, "Configuration loaded: Boot #%lu", s_config.boot_count);
     }
 
-    // Initialize timing counters
-    uint32_t now = esp_log_timestamp() / 1000;
+    // Initialize timing counters using esp_timer
+    uint64_t now_us = esp_timer_get_time();
+    uint32_t now = (uint32_t)(now_us / 1000000ULL);
     s_last_log_time = now;
     s_last_stats_time = now;
     s_last_config_time = now;
