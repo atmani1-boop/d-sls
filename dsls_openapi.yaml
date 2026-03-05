@@ -1,0 +1,764 @@
+openapi: "3.0.3"
+
+info:
+  title: D-SLS DIAMANT Gateway API
+  description: >
+    RESTful HTTP API exposed by the D-SLS DIAMANT v2.1 smart street-lighting
+    gateway (ESP32-C6-MINI-1-N4).  The device acts as a TALQ Gateway
+    (specification reference: TALQ Consortium v2.3.0) and exposes its
+    single tunable-white luminaire (400 W, 2700 K warm + 5000 K cool channels)
+    to any TALQ-compatible CMS.
+
+    Base path for all endpoints: /talq
+  version: "1.0.0"
+  contact:
+    name: D-SLS SRL
+    email: info@d-sls.com
+
+externalDocs:
+  description: TALQ Consortium specification
+  url: https://github.com/TALQ-consortium/TALQ_specification
+
+servers:
+  - url: http://{gatewayIP}/talq
+    description: DIAMANT device (port 80)
+    variables:
+      gatewayIP:
+        default: "192.168.1.100"
+        description: IP address of the DIAMANT gateway on the local network
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Paths
+# ─────────────────────────────────────────────────────────────────────────────
+paths:
+
+  # ── Gateway info ────────────────────────────────────────────────────────────
+  /:
+    get:
+      operationId: getGateway
+      summary: Get gateway metadata and capabilities
+      responses:
+        "200":
+          description: Gateway description
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gateway"
+
+  # ── Nodes ───────────────────────────────────────────────────────────────────
+  /nodes:
+    get:
+      operationId: getNodes
+      summary: List all luminaire nodes managed by this gateway
+      responses:
+        "200":
+          description: Array of nodes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  "@context":
+                    type: string
+                    example: "https://www.talq-consortium.org/talq-context.json"
+                  "talq:nodes":
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Node"
+
+  /nodes/{nodeId}:
+    parameters:
+      - name: nodeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getNode
+      summary: Get a single luminaire node by ID
+      responses:
+        "200":
+          description: Node object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Node"
+        "404":
+          description: Node not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateNode
+      summary: Update node configuration (name, description, active program group)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NodeUpdate"
+      responses:
+        "200":
+          description: Updated node
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Node"
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Node not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Devices ─────────────────────────────────────────────────────────────────
+  /devices:
+    get:
+      operationId: getDevices
+      summary: List LED driver channels (warm 2700 K and cool 5000 K)
+      responses:
+        "200":
+          description: Array of devices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  "@context":
+                    type: string
+                  "talq:devices":
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Device"
+
+  /devices/{deviceId}:
+    parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getDevice
+      summary: Get a single device (LED driver channel) by ID
+      responses:
+        "200":
+          description: Device object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Device"
+        "404":
+          description: Device not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Program Groups ──────────────────────────────────────────────────────────
+  /programGroups:
+    get:
+      operationId: getProgramGroups
+      summary: List all dimming schedule program groups
+      responses:
+        "200":
+          description: Array of program groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  "@context":
+                    type: string
+                  "talq:programGroups":
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ProgramGroup"
+    post:
+      operationId: createProgramGroup
+      summary: Create a new dimming schedule program group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProgramGroupInput"
+      responses:
+        "201":
+          description: Created program group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgramGroup"
+        "400":
+          description: Invalid request body or limit exceeded (max 8 groups)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /programGroups/{groupId}:
+    parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getProgramGroup
+      summary: Get a program group by ID
+      responses:
+        "200":
+          description: Program group object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgramGroup"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateProgramGroup
+      summary: Replace a program group's schedule steps
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProgramGroupInput"
+      responses:
+        "200":
+          description: Updated program group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgramGroup"
+        "400":
+          description: Invalid body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Calendars ───────────────────────────────────────────────────────────────
+  /calendars:
+    get:
+      operationId: getCalendars
+      summary: List all calendars (date-range to program-group mappings)
+      responses:
+        "200":
+          description: Array of calendars
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  "@context":
+                    type: string
+                  "talq:calendars":
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Calendar"
+    post:
+      operationId: createCalendar
+      summary: Create a new calendar entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalendarInput"
+      responses:
+        "201":
+          description: Created calendar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Calendar"
+        "400":
+          description: Invalid body or limit exceeded (max 4 calendars)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /calendars/{calendarId}:
+    parameters:
+      - name: calendarId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getCalendar
+      summary: Get a calendar entry by ID
+      responses:
+        "200":
+          description: Calendar object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Calendar"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateCalendar
+      summary: Update a calendar entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalendarInput"
+      responses:
+        "200":
+          description: Updated calendar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Calendar"
+        "400":
+          description: Invalid body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Commands ────────────────────────────────────────────────────────────────
+  /commands:
+    post:
+      operationId: executeCommand
+      summary: Send an immediate control command to a node
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Command"
+      responses:
+        "200":
+          description: Command accepted and executed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+        "400":
+          description: Missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Node not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Unsupported command type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Events ──────────────────────────────────────────────────────────────────
+  /events:
+    get:
+      operationId: getEvents
+      summary: Poll the event ring buffer for asynchronous notifications
+      parameters:
+        - name: since
+          in: query
+          required: false
+          description: Return only events with seqNo greater than this value
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: Array of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  "@context":
+                    type: string
+                  "talq:events":
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Event"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Components / Schemas
+# ─────────────────────────────────────────────────────────────────────────────
+components:
+  schemas:
+
+    # ── Gateway ──────────────────────────────────────────────────────────────
+    Gateway:
+      type: object
+      required:
+        - "@context"
+        - "@type"
+        - "talq:id"
+        - "talq:specVersion"
+      properties:
+        "@context":
+          type: string
+          example: "https://www.talq-consortium.org/talq-context.json"
+        "@type":
+          type: string
+          enum: ["talq:Gateway"]
+        "talq:id":
+          type: string
+          format: uuid
+        "talq:name":
+          type: string
+          example: "D-SLS DIAMANT v2.1"
+        "talq:description":
+          type: string
+        "talq:specVersion":
+          type: string
+          example: "2.3.0"
+        "talq:implVersion":
+          type: string
+          example: "1.0.0"
+        "talq:timestamp":
+          type: string
+          format: date-time
+        "talq:nodeCount":
+          type: integer
+        "talq:programGroupCount":
+          type: integer
+        "talq:calendarCount":
+          type: integer
+        "talq:supportedCommands":
+          type: array
+          items:
+            type: string
+            enum:
+              - commandSetAbsoluteLevel
+              - commandActivateGroup
+              - commandReset
+              - commandIdentify
+
+    # ── Node ─────────────────────────────────────────────────────────────────
+    Node:
+      type: object
+      required:
+        - "@type"
+        - "talq:id"
+        - "talq:status"
+      properties:
+        "@type":
+          type: string
+          enum: ["talq:Node"]
+        "talq:id":
+          type: string
+          format: uuid
+        "talq:name":
+          type: string
+        "talq:description":
+          type: string
+        "talq:level":
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          description: Relative light output (0.0 = off, 1.0 = full)
+        "talq:cct":
+          type: integer
+          minimum: 2700
+          maximum: 5000
+          description: Correlated colour temperature in Kelvin
+        "talq:powerWatts":
+          type: number
+          description: Measured active power in watts
+        "talq:energyKwh":
+          type: number
+          description: Cumulative energy in kilowatt-hours
+        "talq:ambientLux":
+          type: number
+          description: Ambient light level from TSL2591 sensor
+        "talq:temperature":
+          type: number
+          description: Heatsink temperature from TMP117 sensor in °C
+        "talq:lastSeen":
+          type: string
+          format: date-time
+        "talq:activeProgramGroupId":
+          type: string
+          format: uuid
+          nullable: true
+        "talq:status":
+          type: string
+          enum: [ok, warning, failure, unreachable]
+
+    NodeUpdate:
+      type: object
+      properties:
+        "talq:name":
+          type: string
+        "talq:description":
+          type: string
+        "talq:activeProgramGroupId":
+          type: string
+          format: uuid
+          nullable: true
+
+    # ── Device ───────────────────────────────────────────────────────────────
+    Device:
+      type: object
+      required:
+        - "@type"
+        - "talq:id"
+        - "talq:channel"
+      properties:
+        "@type":
+          type: string
+          enum: ["talq:Device"]
+        "talq:id":
+          type: string
+          format: uuid
+        "talq:name":
+          type: string
+        "talq:channel":
+          type: integer
+          enum: [0, 1]
+          description: "0 = warm channel (2700 K), 1 = cool channel (5000 K)"
+        "talq:nominalCct":
+          type: integer
+          enum: [2700, 5000]
+        "talq:maxPowerWatts":
+          type: number
+          example: 200.0
+        "talq:level":
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        "talq:fault":
+          type: boolean
+
+    # ── Program Group ─────────────────────────────────────────────────────────
+    ProgramStep:
+      type: object
+      required:
+        - "talq:hour"
+        - "talq:minute"
+        - "talq:level"
+      properties:
+        "talq:hour":
+          type: integer
+          minimum: 0
+          maximum: 23
+        "talq:minute":
+          type: integer
+          minimum: 0
+          maximum: 59
+        "talq:level":
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        "talq:cct":
+          type: integer
+          minimum: 2700
+          maximum: 5000
+          description: Colour temperature in K (0 = bypass)
+        "talq:fadeTime":
+          type: number
+          minimum: 0
+          description: Transition time in seconds
+
+    ProgramGroupInput:
+      type: object
+      required:
+        - "talq:name"
+        - "talq:steps"
+      properties:
+        "talq:name":
+          type: string
+        "talq:description":
+          type: string
+        "talq:steps":
+          type: array
+          maxItems: 24
+          items:
+            $ref: "#/components/schemas/ProgramStep"
+
+    ProgramGroup:
+      allOf:
+        - $ref: "#/components/schemas/ProgramGroupInput"
+        - type: object
+          required:
+            - "@type"
+            - "talq:id"
+          properties:
+            "@type":
+              type: string
+              enum: ["talq:ProgramGroup"]
+            "talq:id":
+              type: string
+              format: uuid
+
+    # ── Calendar ──────────────────────────────────────────────────────────────
+    CalendarInput:
+      type: object
+      required:
+        - "talq:name"
+        - "talq:programGroupId"
+        - "talq:validFrom"
+        - "talq:validTo"
+      properties:
+        "talq:name":
+          type: string
+        "talq:programGroupId":
+          type: string
+          format: uuid
+        "talq:validFrom":
+          type: string
+          format: date
+          description: ISO 8601 date YYYY-MM-DD
+        "talq:validTo":
+          type: string
+          format: date
+          description: ISO 8601 date YYYY-MM-DD
+        "talq:daysOfWeek":
+          type: integer
+          minimum: 0
+          maximum: 127
+          description: Bitmask Mon=bit0 … Sun=bit6; 0 = all days
+
+    Calendar:
+      allOf:
+        - $ref: "#/components/schemas/CalendarInput"
+        - type: object
+          required:
+            - "@type"
+            - "talq:id"
+          properties:
+            "@type":
+              type: string
+              enum: ["talq:Calendar"]
+            "talq:id":
+              type: string
+              format: uuid
+
+    # ── Commands ──────────────────────────────────────────────────────────────
+    Command:
+      type: object
+      required:
+        - "talq:commandType"
+        - "talq:nodeId"
+      properties:
+        "talq:commandType":
+          type: string
+          enum:
+            - commandSetAbsoluteLevel
+            - commandActivateGroup
+            - commandReset
+            - commandIdentify
+        "talq:nodeId":
+          type: string
+          format: uuid
+        "talq:level":
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          description: Target level for commandSetAbsoluteLevel
+        "talq:cct":
+          type: integer
+          minimum: 2700
+          maximum: 5000
+          description: Target CCT in K for commandSetAbsoluteLevel
+        "talq:fadeTime":
+          type: number
+          minimum: 0
+          description: Transition duration in seconds
+        "talq:programGroupId":
+          type: string
+          format: uuid
+          description: Target group for commandActivateGroup
+
+    CommandResult:
+      type: object
+      properties:
+        "@context":
+          type: string
+        "talq:status":
+          type: string
+          enum: [ok]
+        "talq:commandType":
+          type: string
+        "talq:nodeId":
+          type: string
+          format: uuid
+
+    # ── Events ────────────────────────────────────────────────────────────────
+    Event:
+      type: object
+      required:
+        - "talq:seqNo"
+        - "talq:timestamp"
+        - "talq:type"
+        - "talq:sourceId"
+      properties:
+        "talq:seqNo":
+          type: integer
+          minimum: 1
+        "talq:timestamp":
+          type: string
+          format: date-time
+        "talq:type":
+          type: string
+          enum:
+            - levelChanged
+            - statusChanged
+            - faultRaised
+            - faultCleared
+            - configChanged
+        "talq:sourceId":
+          type: string
+          format: uuid
+        "talq:detail":
+          type: string
+
+    # ── Error ─────────────────────────────────────────────────────────────────
+    ErrorResponse:
+      type: object
+      properties:
+        "@context":
+          type: string
+        "talq:error":
+          type: string
+        "talq:message":
+          type: string
