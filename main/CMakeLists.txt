@@ -1,0 +1,21 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "config_manager.c"
+        "thread_network.c"
+        "rdmnet_client.c"
+        "sacn_receiver.c"
+        "lighting_engine.c"
+        "energy_manager.c"
+        "scenes_engine.c"
+        "mesh_sync.c"
+        "ui_manager.c"
+        "logger.c"
+    INCLUDE_DIRS "."
+    REQUIRES
+        nvs_flash
+        esp_netif
+        driver
+        openthread
+        lwip
+)
