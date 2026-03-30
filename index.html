@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MiniMax Text-to-Speech</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .container { max-width: 640px; width: 100%; }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 24px;
+      color: #fff;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #aaa;
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+    textarea, input, select {
+      width: 100%;
+      padding: 10px 12px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+    textarea { resize: vertical; min-height: 100px; }
+    textarea:focus, input:focus, select:focus {
+      outline: none;
+      border-color: #5b8def;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .row-3 { grid-template-columns: 1fr 1fr 1fr; }
+    button {
+      margin-top: 24px;
+      width: 100%;
+      padding: 12px;
+      background: #5b8def;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: #4a7de0; }
+    button:disabled { background: #333; cursor: not-allowed; }
+    #status {
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: #aaa;
+      min-height: 20px;
+    }
+    #audio-container {
+      margin-top: 20px;
+      display: none;
+    }
+    audio { width: 100%; }
+    .section {
+      background: #161616;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+    }
+    .section-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #ccc;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>MiniMax Text-to-Speech</h1>
+
+    <label for="api-key">API Key</label>
+    <input type="password" id="api-key" placeholder="Enter your MiniMax API key">
+
+    <label for="text-input">Text</label>
+    <textarea id="text-input" placeholder="Enter text to convert to speech...">Omg, the real danger is not that computers start thinking like people, but that people start thinking like computers. Computers can only help us with simple tasks.</textarea>
+
+    <div class="section">
+      <div class="section-title">Voice Settings</div>
+      <label for="voice-id">Voice</label>
+      <select id="voice-id">
+        <option value="English_expressive_narrator">English Expressive Narrator</option>
+        <option value="English_calm_woman">English Calm Woman</option>
+        <option value="English_calm_man">English Calm Man</option>
+        <option value="English_news_anchor">English News Anchor</option>
+      </select>
+      <div class="row row-3">
+        <div>
+          <label for="speed">Speed</label>
+          <input type="number" id="speed" value="1" min="0.5" max="2" step="0.1">
+        </div>
+        <div>
+          <label for="vol">Volume</label>
+          <input type="number" id="vol" value="1" min="0" max="1" step="0.1">
+        </div>
+        <div>
+          <label for="pitch">Pitch</label>
+          <input type="number" id="pitch" value="0" min="-12" max="12" step="1">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Audio Settings</div>
+      <div class="row">
+        <div>
+          <label for="sample-rate">Sample Rate</label>
+          <select id="sample-rate">
+            <option value="16000">16000</option>
+            <option value="24000">24000</option>
+            <option value="32000" selected>32000</option>
+            <option value="44100">44100</option>
+          </select>
+        </div>
+        <div>
+          <label for="bitrate">Bitrate</label>
+          <select id="bitrate">
+            <option value="64000">64 kbps</option>
+            <option value="128000" selected>128 kbps</option>
+            <option value="256000">256 kbps</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="format">Format</label>
+          <select id="format">
+            <option value="mp3" selected>MP3</option>
+            <option value="wav">WAV</option>
+            <option value="flac">FLAC</option>
+          </select>
+        </div>
+        <div>
+          <label for="sound-effects">Sound Effect</label>
+          <select id="sound-effects">
+            <option value="">None</option>
+            <option value="spacious_echo" selected>Spacious Echo</option>
+            <option value="bright">Bright</option>
+            <option value="warm">Warm</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Pronunciation Dictionary</div>
+      <label for="pronunciation">Tone replacements (one per line, format: word/replacement)</label>
+      <textarea id="pronunciation" style="min-height:60px">Omg/Oh my god</textarea>
+    </div>
+
+    <button id="generate-btn" onclick="generate()">Generate Speech</button>
+    <div id="status"></div>
+    <div id="audio-container">
+      <audio id="audio-player" controls></audio>
+    </div>
+  </div>
+
+  <script>
+    async function generate() {
+      const apiKey = document.getElementById('api-key').value.trim();
+      if (!apiKey) {
+        setStatus('Please enter your API key.', true);
+        return;
+      }
+      const text = document.getElementById('text-input').value.trim();
+      if (!text) {
+        setStatus('Please enter some text.', true);
+        return;
+      }
+
+      const btn = document.getElementById('generate-btn');
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      setStatus('Sending request to MiniMax API...');
+
+      const toneLines = document.getElementById('pronunciation').value.trim().split('\n').filter(Boolean);
+      const format = document.getElementById('format').value;
+      const soundEffect = document.getElementById('sound-effects').value;
+
+      const body = {
+        model: 'speech-2.8-hd',
+        text: text,
+        stream: false,
+        voice_setting: {
+          voice_id: document.getElementById('voice-id').value,
+          speed: parseFloat(document.getElementById('speed').value),
+          vol: parseFloat(document.getElementById('vol').value),
+          pitch: parseInt(document.getElementById('pitch').value)
+        },
+        audio_setting: {
+          sample_rate: parseInt(document.getElementById('sample-rate').value),
+          bitrate: parseInt(document.getElementById('bitrate').value),
+          format: format,
+          channel: 1
+        },
+        language_boost: 'auto',
+        output_format: 'hex'
+      };
+
+      if (toneLines.length > 0) {
+        body.pronunciation_dict = { tone: toneLines };
+      }
+      if (soundEffect) {
+        body.voice_modify = {
+          pitch: 0,
+          intensity: 0,
+          timbre: 0,
+          sound_effects: soundEffect
+        };
+      }
+
+      try {
+        const res = await fetch('https://api.minimax.io/v1/t2a_v2', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + apiKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          throw new Error('API error ' + res.status + ': ' + err);
+        }
+
+        const data = await res.json();
+
+        if (data.base_resp && data.base_resp.status_code !== 0) {
+          throw new Error(data.base_resp.status_msg || 'API returned an error');
+        }
+
+        const hexData = data.data && data.data.audio;
+        if (!hexData) {
+          throw new Error('No audio data in response');
+        }
+
+        const bytes = new Uint8Array(hexData.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+        const mimeType = format === 'wav' ? 'audio/wav' : format === 'flac' ? 'audio/flac' : 'audio/mpeg';
+        const blob = new Blob([bytes], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+
+        const player = document.getElementById('audio-player');
+        player.src = url;
+        document.getElementById('audio-container').style.display = 'block';
+        player.play();
+
+        setStatus('Audio generated successfully.');
+      } catch (err) {
+        setStatus('Error: ' + err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate Speech';
+      }
+    }
+
+    function setStatus(msg, isError) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.style.color = isError ? '#ef5b5b' : '#aaa';
+    }
+  </script>
+</body>
+</html>
