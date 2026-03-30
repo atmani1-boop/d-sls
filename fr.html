@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MiniMax Synthèse Vocale</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .container { max-width: 640px; width: 100%; }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 24px;
+      color: #fff;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #aaa;
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+    textarea, input, select {
+      width: 100%;
+      padding: 10px 12px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+    textarea { resize: vertical; min-height: 100px; }
+    textarea:focus, input:focus, select:focus {
+      outline: none;
+      border-color: #5b8def;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .row-3 { grid-template-columns: 1fr 1fr 1fr; }
+    button {
+      margin-top: 24px;
+      width: 100%;
+      padding: 12px;
+      background: #5b8def;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: #4a7de0; }
+    button:disabled { background: #333; cursor: not-allowed; }
+    #status {
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: #aaa;
+      min-height: 20px;
+    }
+    #audio-container {
+      margin-top: 20px;
+      display: none;
+    }
+    audio { width: 100%; }
+    .section {
+      background: #161616;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+    }
+    .section-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #ccc;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>MiniMax Synth&egrave;se Vocale</h1>
+
+    <label for="api-key">Cl&eacute; API</label>
+    <input type="password" id="api-key" placeholder="Entrez votre cl&eacute; API MiniMax">
+
+    <label for="text-input">Texte</label>
+    <textarea id="text-input" placeholder="Entrez le texte &agrave; convertir en parole...">Omg, le vrai danger n'est pas que les ordinateurs commencent &agrave; penser comme les gens, mais que les gens commencent &agrave; penser comme des ordinateurs. Les ordinateurs ne peuvent nous aider qu'avec des t&acirc;ches simples.</textarea>
+
+    <div class="section">
+      <div class="section-title">R&eacute;glages de la voix</div>
+      <label for="voice-id">Voix</label>
+      <select id="voice-id">
+        <option value="English_expressive_narrator">Narrateur expressif (anglais)</option>
+        <option value="English_calm_woman">Femme calme (anglais)</option>
+        <option value="English_calm_man">Homme calme (anglais)</option>
+        <option value="English_news_anchor">Pr&eacute;sentateur de nouvelles (anglais)</option>
+      </select>
+      <div class="row row-3">
+        <div>
+          <label for="speed">Vitesse</label>
+          <input type="number" id="speed" value="1" min="0.5" max="2" step="0.1">
+        </div>
+        <div>
+          <label for="vol">Volume</label>
+          <input type="number" id="vol" value="1" min="0" max="1" step="0.1">
+        </div>
+        <div>
+          <label for="pitch">Tonalit&eacute;</label>
+          <input type="number" id="pitch" value="0" min="-12" max="12" step="1">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">R&eacute;glages audio</div>
+      <div class="row">
+        <div>
+          <label for="sample-rate">Fr&eacute;quence d'&eacute;chantillonnage</label>
+          <select id="sample-rate">
+            <option value="16000">16000</option>
+            <option value="24000">24000</option>
+            <option value="32000" selected>32000</option>
+            <option value="44100">44100</option>
+          </select>
+        </div>
+        <div>
+          <label for="bitrate">D&eacute;bit binaire</label>
+          <select id="bitrate">
+            <option value="64000">64 kbps</option>
+            <option value="128000" selected>128 kbps</option>
+            <option value="256000">256 kbps</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="format">Format</label>
+          <select id="format">
+            <option value="mp3" selected>MP3</option>
+            <option value="wav">WAV</option>
+            <option value="flac">FLAC</option>
+          </select>
+        </div>
+        <div>
+          <label for="sound-effects">Effet sonore</label>
+          <select id="sound-effects">
+            <option value="">Aucun</option>
+            <option value="spacious_echo" selected>&Eacute;cho spacieux</option>
+            <option value="bright">Brillant</option>
+            <option value="warm">Chaleureux</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Dictionnaire de prononciation</div>
+      <label for="pronunciation">Remplacements de ton (un par ligne, format : mot/remplacement)</label>
+      <textarea id="pronunciation" style="min-height:60px">Omg/Oh mon dieu</textarea>
+    </div>
+
+    <button id="generate-btn" onclick="generate()">G&eacute;n&eacute;rer la parole</button>
+    <div id="status"></div>
+    <div id="audio-container">
+      <audio id="audio-player" controls></audio>
+    </div>
+  </div>
+
+  <script>
+    async function generate() {
+      const apiKey = document.getElementById('api-key').value.trim();
+      if (!apiKey) {
+        setStatus('Veuillez entrer votre clé API.', true);
+        return;
+      }
+      const text = document.getElementById('text-input').value.trim();
+      if (!text) {
+        setStatus('Veuillez entrer du texte.', true);
+        return;
+      }
+
+      const btn = document.getElementById('generate-btn');
+      btn.disabled = true;
+      btn.textContent = 'Génération en cours...';
+      setStatus('Envoi de la requête à l\'API MiniMax...');
+
+      const toneLines = document.getElementById('pronunciation').value.trim().split('\n').filter(Boolean);
+      const format = document.getElementById('format').value;
+      const soundEffect = document.getElementById('sound-effects').value;
+
+      const body = {
+        model: 'speech-2.8-hd',
+        text: text,
+        stream: false,
+        voice_setting: {
+          voice_id: document.getElementById('voice-id').value,
+          speed: parseFloat(document.getElementById('speed').value),
+          vol: parseFloat(document.getElementById('vol').value),
+          pitch: parseInt(document.getElementById('pitch').value)
+        },
+        audio_setting: {
+          sample_rate: parseInt(document.getElementById('sample-rate').value),
+          bitrate: parseInt(document.getElementById('bitrate').value),
+          format: format,
+          channel: 1
+        },
+        language_boost: 'auto',
+        output_format: 'hex'
+      };
+
+      if (toneLines.length > 0) {
+        body.pronunciation_dict = { tone: toneLines };
+      }
+      if (soundEffect) {
+        body.voice_modify = {
+          pitch: 0,
+          intensity: 0,
+          timbre: 0,
+          sound_effects: soundEffect
+        };
+      }
+
+      try {
+        const res = await fetch('https://api.minimax.io/v1/t2a_v2', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + apiKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          throw new Error('Erreur API ' + res.status + ' : ' + err);
+        }
+
+        const data = await res.json();
+
+        if (data.base_resp && data.base_resp.status_code !== 0) {
+          throw new Error(data.base_resp.status_msg || 'L\'API a retourné une erreur');
+        }
+
+        const hexData = data.data && data.data.audio;
+        if (!hexData) {
+          throw new Error('Aucune donnée audio dans la réponse');
+        }
+
+        const bytes = new Uint8Array(hexData.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+        const mimeType = format === 'wav' ? 'audio/wav' : format === 'flac' ? 'audio/flac' : 'audio/mpeg';
+        const blob = new Blob([bytes], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+
+        const player = document.getElementById('audio-player');
+        player.src = url;
+        document.getElementById('audio-container').style.display = 'block';
+        player.play();
+
+        setStatus('Audio généré avec succès.');
+      } catch (err) {
+        setStatus('Erreur : ' + err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Générer la parole';
+      }
+    }
+
+    function setStatus(msg, isError) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.style.color = isError ? '#ef5b5b' : '#aaa';
+    }
+  </script>
+</body>
+</html>
